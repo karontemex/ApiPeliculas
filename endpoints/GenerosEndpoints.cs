@@ -13,7 +13,7 @@ namespace ApiPeliculas.endpoints
     {
         public static RouteGroupBuilder MapGeneros(this RouteGroupBuilder group)
         {
-            group.MapGet("/", GetGeneros).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(30)).Tag("generos-get"));
+            group.MapGet("/", GetGeneros).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(30)).Tag("generos-get")).RequireAuthorization();
 
             group.MapGet("/{id:int}", GetGeneroById).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(30))).AddEndpointFilter<FiltroPrueba>();
 

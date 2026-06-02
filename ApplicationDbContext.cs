@@ -1,9 +1,11 @@
 ﻿using ApiPeliculas.Entities;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace ApiPeliculas
 {
-    public class ApplicationDbContext: DbContext
+    public class ApplicationDbContext: IdentityDbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {            
@@ -12,6 +14,7 @@ namespace ApiPeliculas
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
             modelBuilder.Entity<Genero>().Property(g => g.Nombre).HasMaxLength(50);
             /*
             modelBuilder.Entity<Genero>().HasData(
@@ -31,6 +34,15 @@ namespace ApiPeliculas
             modelBuilder.Entity<GeneroPelicula>().HasKey(gp => new { gp.GeneroId, gp.PeliculaId });
             
             modelBuilder.Entity<ActorPelicula>().HasKey(ap => new { ap.ActorId, ap.PeliculaId });
+
+            modelBuilder.Entity<IdentityUser>().ToTable("Usuarios");
+            modelBuilder.Entity<IdentityRole>().ToTable("Roles");
+            modelBuilder.Entity<IdentityRoleClaim<string>>().ToTable("RolesClaims");
+            modelBuilder.Entity<IdentityUserClaim<string>>().ToTable("UsuariosClaims");
+            modelBuilder.Entity<IdentityUserLogin<string>>().ToTable("UsuariosLogins");
+            modelBuilder.Entity<IdentityUserRole<string>>().ToTable("UsuariosRoles");
+            modelBuilder.Entity<IdentityUserToken<string>>().ToTable("UsuariosTokens");
+
         }
         public DbSet<Genero> Generos { get; set; }
 
