@@ -114,6 +114,7 @@ app.MapGroup("/Generos").MapGeneros();
 app.MapGroup("/Actores").MapActores();
 app.MapGroup("/Peliculas").MapPeliculas();
 app.MapGroup("/pelicula/{peliculaId:int}/comentarios").MapComentarios();
+app.MapGroup("/usuarios").MapUsuarios();
 
 
 
