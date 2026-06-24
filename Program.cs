@@ -47,6 +47,7 @@ builder.Services.AddScoped<IRepositoryPeliculas, RepositoryPeliculas>();
 builder.Services.AddScoped<IRepositorioComentarios, RepositorioComentarios>();
 builder.Services.AddScoped<IAlmacenadorArchivos,AlmacenadorArchivosLocal>();
 builder.Services.AddScoped<IRepositoryErrores, RepositoryErrores>();
+builder.Services.AddTransient<IServicioUsuarios, ServicioUsuarios>();
 
 
 builder.Services.AddHttpContextAccessor();
@@ -54,21 +55,28 @@ builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 builder.Services.AddAuthentication().AddJwtBearer()
-    .AddJwtBearer(opciones => opciones.TokenValidationParameters = new TokenValidationParameters
-{
-    ValidateIssuer = false,
-    ValidateAudience = false,
-    ValidateLifetime = true,
-    ValidateIssuerSigningKey = true,
-    ValidIssuer = Llaves.IssuerPropio,
-    ValidAudience = Llaves.IssuerPropio,
-    //IssuerSigningKey = Llaves.ObtenerLlave(builder.Configuration).First(),
-    IssuerSigningKeys = Llaves.ObtenerTodasLlaves(builder.Configuration, Llaves.IssuerPropio),
-    ClockSkew = TimeSpan.Zero
- });
+    .AddJwtBearer(opciones => 
+    {
+        opciones.MapInboundClaims = false;
+        opciones.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = Llaves.IssuerPropio,
+            ValidAudience = Llaves.IssuerPropio,
+            //IssuerSigningKey = Llaves.ObtenerLlave(builder.Configuration).First(),
+            IssuerSigningKeys = Llaves.ObtenerTodasLlaves(builder.Configuration, Llaves.IssuerPropio),
+            ClockSkew = TimeSpan.Zero
+        }; 
+    }
+    );
 
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(opciones => {
+    opciones.AddPolicy("esadmin", politica => politica.RequireClaim("esadmin"));
+});
 
 
 //Fin area Servicios

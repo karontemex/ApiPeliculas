@@ -19,11 +19,11 @@ namespace ApiPeliculas.endpoints
 
             //group.MapPost("/", crearGenero).AddEndpointFilter<FiltroValidacionesGeneros>();//Aqui se usda un filtro de validación para validar el DTO, si no es válido se retorna un 400 con los errores de validación
 
-            group.MapPost("/", crearGenero).AddEndpointFilter<FiltroValidaciones<CrearGeneroDTO>>();//Aqui se usda un filtro de validación generico
+            group.MapPost("/", crearGenero).AddEndpointFilter<FiltroValidaciones<CrearGeneroDTO>>().RequireAuthorization("esadmin"); //Aqui se usda un filtro de validación generico
 
-            group.MapPut("/{id:int}", actualizarGenero); //Aqui no se usa el filtro de validación porque queremos validar el DTO dentro del endpoint para poder retornar un 400 con los errores de validación, si lo hacemos con el filtro no podremos retornar un 400 y se lanzará una excepción
+            group.MapPut("/{id:int}", actualizarGenero).RequireAuthorization("esadmin");  //Aqui no se usa el filtro de validación porque queremos validar el DTO dentro del endpoint para poder retornar un 400 con los errores de validación, si lo hacemos con el filtro no podremos retornar un 400 y se lanzará una excepción
 
-            group.MapDelete("/{id:int}", eliminarGenero);
+            group.MapDelete("/{id:int}", eliminarGenero).RequireAuthorization("esadmin"); ;
 
             return group;
         }

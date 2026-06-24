@@ -17,12 +17,12 @@ namespace ApiPeliculas.endpoints
         {
             // group.MapPost("/", Crear).WithName("CrearPelicula").DisableAntiforgery().Accepts<CrearPeliculaDTO>("multipart/form-data").Produces<PeliculaDTO>(StatusCodes.Status201Created);
             group.MapGet("/", GetPeliculas).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(30)).Tag("peliculas-get"));
-            group.MapPost("/", Crear).DisableAntiforgery().AddEndpointFilter<FiltroValidaciones<CrearPeliculaDTO>>();
+            group.MapPost("/", Crear).DisableAntiforgery().AddEndpointFilter<FiltroValidaciones<CrearPeliculaDTO>>().RequireAuthorization("esadmin");
             group.MapGet("/{id:int}", GetPeliculaById);
-            group.MapPut("/{id:int}", Actualizar).DisableAntiforgery().AddEndpointFilter<FiltroValidaciones<CrearPeliculaDTO>>();
-            group.MapDelete("/{id:int}", Borrar).DisableAntiforgery();
-            group.MapPost("/{id:int}/AsignarGeneros", AsignarGeneros).DisableAntiforgery();
-            group.MapPost("/{id:int}/AsignarActores", AsignarActores).DisableAntiforgery();
+            group.MapPut("/{id:int}", Actualizar).DisableAntiforgery().AddEndpointFilter<FiltroValidaciones<CrearPeliculaDTO>>().RequireAuthorization("esadmin");
+            group.MapDelete("/{id:int}", Borrar).DisableAntiforgery().RequireAuthorization("esadmin");
+            group.MapPost("/{id:int}/AsignarGeneros", AsignarGeneros).DisableAntiforgery().RequireAuthorization("esadmin");
+            group.MapPost("/{id:int}/AsignarActores", AsignarActores).DisableAntiforgery().RequireAuthorization("esadmin");
             return group;
         }
 

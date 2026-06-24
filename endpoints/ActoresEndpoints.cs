@@ -21,9 +21,9 @@ namespace ApiPeliculas.endpoints
             group.MapGet("/", GetActores).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(30)).Tag("actores-get"));
             group.MapGet("/{id:int}", GetActorById);
             group.MapGet("/buscarPorNombre/{nombre}", GetActoresPorNombre);
-            group.MapPost("/", Create).DisableAntiforgery().AddEndpointFilter<FiltroValidaciones<CrearActorDto>>();
-            group.MapPut("/{id:int}", Update).DisableAntiforgery();
-            group.MapDelete("/{id:int}", Delete);
+            group.MapPost("/", Create).DisableAntiforgery().AddEndpointFilter<FiltroValidaciones<CrearActorDto>>().RequireAuthorization("esadmin");
+            group.MapPut("/{id:int}", Update).DisableAntiforgery().RequireAuthorization("esadmin");
+            group.MapDelete("/{id:int}", Delete).RequireAuthorization("esadmin");
 
             return group;
         }
