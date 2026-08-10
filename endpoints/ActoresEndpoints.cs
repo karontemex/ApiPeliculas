@@ -10,6 +10,8 @@ using System.Runtime.CompilerServices;
 using FluentValidation;
 using ApiPeliculas.Validaciones;
 using ApiPeliculas.Filtros;
+using Microsoft.OpenApi.Models;
+using ApiPeliculas.Utilidades;
 
 namespace ApiPeliculas.endpoints
 {
@@ -18,10 +20,12 @@ namespace ApiPeliculas.endpoints
         private static readonly string contenedor = "actores";
         public static RouteGroupBuilder MapActores(this RouteGroupBuilder group)
         {
-            group.MapGet("/", GetActores).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(30)).Tag("actores-get"));
+            group.MapGet("/", GetActores).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(30)).Tag("actores-get")).AgregarParamatrosPaginacionOpenAPI();
             group.MapGet("/{id:int}", GetActorById);
             group.MapGet("/buscarPorNombre/{nombre}", GetActoresPorNombre);
-            group.MapPost("/", Create).DisableAntiforgery().AddEndpointFilter<FiltroValidaciones<CrearActorDto>>().RequireAuthorization("esadmin");
+            group.MapPost("/", Create).DisableAntiforgery().AddEndpointFilter<FiltroValidaciones<CrearActorDto>>()
+                .RequireAuthorization("esadmin")
+                .WithOpenApi();
             group.MapPut("/{id:int}", Update).DisableAntiforgery().RequireAuthorization("esadmin");
             group.MapDelete("/{id:int}", Delete).RequireAuthorization("esadmin");
 
@@ -45,9 +49,9 @@ namespace ApiPeliculas.endpoints
             var actorCreado = mapper.Map<ActorDto>(actor);
             return TypedResults.Created($"/actores/{id}", actorCreado);
         }
-        static async Task<Ok<List<ActorDto>>> GetActores(IRepositoryActores repository, IMapper mapper, int pagina = 1, int recordsPorPagina = 10)
+        static async Task<Ok<List<ActorDto>>> GetActores(IRepositoryActores repository, IMapper mapper, PaginacionDTO paginacion)
         {
-            var paginacion = new PaginacionDTO() { Pagina = pagina, RecordsPorPagina = recordsPorPagina };
+            //var paginacion = new PaginacionDTO() { Pagina = pagina, RecordsPorPagina = recordsPorPagina };
 
             var actores = await repository.GetActores(paginacion);
             var actoresDTO = mapper.Map<List<ActorDto>>(actores);

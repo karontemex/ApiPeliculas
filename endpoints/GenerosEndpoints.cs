@@ -21,14 +21,29 @@ namespace ApiPeliculas.endpoints
 
             group.MapPost("/", crearGenero).AddEndpointFilter<FiltroValidaciones<CrearGeneroDTO>>().RequireAuthorization("esadmin"); //Aqui se usda un filtro de validación generico
 
-            group.MapPut("/{id:int}", actualizarGenero).RequireAuthorization("esadmin");  //Aqui no se usa el filtro de validación porque queremos validar el DTO dentro del endpoint para poder retornar un 400 con los errores de validación, si lo hacemos con el filtro no podremos retornar un 400 y se lanzará una excepción
+            group.MapPut("/{id:int}", actualizarGenero).RequireAuthorization("esadmin")
+                .WithOpenApi(opciones => {
+                    opciones.Summary = "Actualizar un género";
+                    opciones.Description = "Podemos actualizar un genero";
+                    opciones.Parameters[0].Description = "Id del género a actualizar";
+                    opciones.RequestBody.Description = "El género que se quiere actualizar";
 
-            group.MapDelete("/{id:int}", eliminarGenero).RequireAuthorization("esadmin"); ;
+                    return opciones;
+                });  //Aqui no se usa el filtro de validación porque queremos validar el DTO dentro del endpoint para poder retornar un 400 con los errores de validación, si lo hacemos con el filtro no podremos retornar un 400 y se lanzará una excepción
+
+            group.MapDelete("/{id:int}", eliminarGenero).RequireAuthorization("esadmin"); 
 
             return group;
         }
-        static async Task<Ok<List<GeneroDto>>> GetGeneros(IRepositoryGeneros repository, IMapper mapper)
+        static async Task<Ok<List<GeneroDto>>> GetGeneros(IRepositoryGeneros repository, IMapper mapper, ILoggerFactory loggerFactory)
         {
+
+            var tipo = typeof(GenerosEndpoints);
+
+            var logger = loggerFactory.CreateLogger(tipo.FullName!);
+
+            logger.LogInformation("Prueba logger - obteniendo lsitado de generos");
+
             var generos = await repository.GetGeneros();
 
             var generosDTO = mapper.Map<List<GeneroDto>>(generos);
@@ -36,15 +51,15 @@ namespace ApiPeliculas.endpoints
             return TypedResults.Ok(generosDTO);
         }
 
-        static async Task<Results<Ok<GeneroDto>, NotFound>> GetGeneroById(int id, IRepositoryGeneros repository, IMapper mapper)
+        static async Task<Results<Ok<GeneroDto>, NotFound>> GetGeneroById([AsParameters] ObtenerGeneroPorIDPeticionDTO modelo)
         {
-            var genero = await repository.GetGeneroById(id);
+            var genero = await modelo.GetGeneroById(modelo.id);
             if (genero == null)
             {
                 return TypedResults.NotFound();
             }
 
-            var generoDTO = mapper.Map<GeneroDto>(genero);
+            var generoDTO = modelo.mapper.Map<GeneroDto>(genero);
 
             return TypedResults.Ok(generoDTO);
         }

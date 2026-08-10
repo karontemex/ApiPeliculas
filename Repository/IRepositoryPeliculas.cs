@@ -13,5 +13,6 @@ namespace ApiPeliculas.Repository
         Task<List<Pelicula>> GetPeliculas(PaginacionDTO paginacionDTO);
         Task AsignarGeneros(int id, List<int> generosIds);
         Task AsignarActores(int id, List<ActorPelicula> actoresPeliculas);
+        Task <List<Pelicula>> Filtrar(PeliculasFiltrarDTO peliculasFiltrarDTO);
     }
 }

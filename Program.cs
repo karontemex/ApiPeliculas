@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using ApiPeliculas.Utilidades;
+using Microsoft.OpenApi.Models;
+using ApiPeliculas.Swagger;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,7 +40,46 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddOutputCache();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c => {
+    c.SwaggerDoc("V1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "Peliculas API",
+        Description ="Proyecto ppara una API de elicula sen minimal API",
+        Contact  = new Microsoft.OpenApi.Models.OpenApiContact { 
+            Email = "rene.ortizg@gmail.com",
+            Name = "Rene Ortiz (@Karontemx)",
+            Url = new Uri("https://hiryuosft.com")
+        },
+        License = new Microsoft.OpenApi.Models.OpenApiLicense { 
+            Name = "MIT",
+            Url = new Uri("https://opensource.org/license/mit/")
+
+        }
+    });
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name ="Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme ="Bearer",
+        In = ParameterLocation.Header
+    });
+
+    c.OperationFilter<FiltroAutorizacion>();
+    /*
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme { 
+                Reference = new OpenApiReference
+                { 
+                    Type = ReferenceType.SecurityScheme,
+                    Id= "Bearer"
+                }
+            }, new string[]{ }
+        }
+    });
+    */
+});
 builder.Services.AddProblemDetails();
 
 builder.Services.AddScoped<IRepositoryGeneros, RepositoryGeneros>();
@@ -118,6 +159,14 @@ app.MapGet("/", () => "Hello World!");
 app.MapGet("/error", () => {
     throw new InvalidOperationException("Error de prueba");
 });
+app.MapPost("/modelBinding", (string? nombre) => {
+    if (nombre is null) { 
+        nombre = "vacio";
+    }
+
+    return TypedResults.Ok(nombre);
+});
+
 app.MapGroup("/Generos").MapGeneros();
 app.MapGroup("/Actores").MapActores();
 app.MapGroup("/Peliculas").MapPeliculas();

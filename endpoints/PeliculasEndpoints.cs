@@ -3,6 +3,7 @@ using ApiPeliculas.Entities;
 using ApiPeliculas.Filtros;
 using ApiPeliculas.Repository;
 using ApiPeliculas.Services;
+using ApiPeliculas.Utilidades;
 using AutoMapper;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -16,13 +17,19 @@ namespace ApiPeliculas.endpoints
         public static RouteGroupBuilder MapPeliculas(this RouteGroupBuilder group)
         {
             // group.MapPost("/", Crear).WithName("CrearPelicula").DisableAntiforgery().Accepts<CrearPeliculaDTO>("multipart/form-data").Produces<PeliculaDTO>(StatusCodes.Status201Created);
-            group.MapGet("/", GetPeliculas).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(30)).Tag("peliculas-get"));
-            group.MapPost("/", Crear).DisableAntiforgery().AddEndpointFilter<FiltroValidaciones<CrearPeliculaDTO>>().RequireAuthorization("esadmin");
+            group.MapGet("/", GetPeliculas).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(30)).Tag("peliculas-get")).AgregarParamatrosPaginacionOpenAPI();
+            group.MapPost("/", Crear).DisableAntiforgery().AddEndpointFilter<FiltroValidaciones<CrearPeliculaDTO>>()
+                .RequireAuthorization("esadmin")
+                .WithOpenApi();
             group.MapGet("/{id:int}", GetPeliculaById);
-            group.MapPut("/{id:int}", Actualizar).DisableAntiforgery().AddEndpointFilter<FiltroValidaciones<CrearPeliculaDTO>>().RequireAuthorization("esadmin");
+            group.MapPut("/{id:int}", Actualizar).DisableAntiforgery().AddEndpointFilter<FiltroValidaciones<CrearPeliculaDTO>>()
+                .RequireAuthorization("esadmin")
+                .WithOpenApi();
             group.MapDelete("/{id:int}", Borrar).DisableAntiforgery().RequireAuthorization("esadmin");
             group.MapPost("/{id:int}/AsignarGeneros", AsignarGeneros).DisableAntiforgery().RequireAuthorization("esadmin");
             group.MapPost("/{id:int}/AsignarActores", AsignarActores).DisableAntiforgery().RequireAuthorization("esadmin");
+            group.MapGet("/filtrar", FiltrarPeliculas).AgregarParamatrosPeliculaFiltroOpenAPI();
+                
             return group;
         }
 
@@ -42,10 +49,9 @@ namespace ApiPeliculas.endpoints
             return TypedResults.Created($"/peliculas/{id}", peliculaCreada);
         }
 
-        static async Task<Ok<List<PeliculaDTO>>> GetPeliculas(IRepositoryPeliculas repositoryPeliculas, IMapper mapper, int pagina = 1, int cantidad = 10)
+        static async Task<Ok<List<PeliculaDTO>>> GetPeliculas(IRepositoryPeliculas repositoryPeliculas, IMapper mapper, PaginacionDTO paginacionDTO)
         {
-            var paginacion = new PaginacionDTO { Pagina = pagina, RecordsPorPagina = cantidad };
-            var peliculas = await repositoryPeliculas.GetPeliculas(paginacion);
+            var peliculas = await repositoryPeliculas.GetPeliculas(paginacionDTO);
             var peliculasDTO = mapper.Map<List<PeliculaDTO>>(peliculas);
             return TypedResults.Ok(peliculasDTO);
         }
@@ -156,5 +162,17 @@ namespace ApiPeliculas.endpoints
             await repositoryPeliculas.AsignarActores(id, actoresPeliculasResultado);
             return TypedResults.NoContent();
         }
-    }
+
+        static async Task<Results<Ok<List<PeliculaDTO>>, NotFound>> FiltrarPeliculas(PeliculasFiltrarDTO peliculasFiltrarDTO, IRepositoryPeliculas repositoryPeliculas
+            , IMapper mapper)
+        {
+            var peliculas = await repositoryPeliculas.Filtrar(peliculasFiltrarDTO);
+            if (peliculas == null || peliculas.Count == 0)
+            {
+                return TypedResults.NotFound();
+            }
+            var peliculasDTO = mapper.Map<List<PeliculaDTO>>(peliculas);
+            return TypedResults.Ok(peliculasDTO);
+        }
+}
 }

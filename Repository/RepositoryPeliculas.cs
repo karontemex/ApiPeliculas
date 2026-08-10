@@ -5,6 +5,7 @@ using ApiPeliculas.Utilidades;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Dynamic.Core;
 
 namespace ApiPeliculas.Repository
 {
@@ -13,12 +14,14 @@ namespace ApiPeliculas.Repository
         private readonly ApplicationDbContext context;
         private readonly HttpContext httpContext;
         private readonly IMapper mapper;
+        private readonly ILogger<RepositoryPeliculas> logger;
 
-        public RepositoryPeliculas(ApplicationDbContext context, IHttpContextAccessor HttpContextAccessor, IMapper mapper)
+        public RepositoryPeliculas(ApplicationDbContext context, IHttpContextAccessor HttpContextAccessor, IMapper mapper, ILogger<RepositoryPeliculas> logger)
         {
             this.context = context;
             httpContext = HttpContextAccessor.HttpContext!;
             this.mapper = mapper;
+            this.logger = logger;
         }
 
         public async Task<List<Pelicula>> GetPeliculas(PaginacionDTO paginacionDTO)
@@ -96,6 +99,50 @@ namespace ApiPeliculas.Repository
             pelicula.ActoresPelicula = mapper.Map(actoresPeliculas, pelicula.ActoresPelicula);
             await context.SaveChangesAsync();
         }
-    }
+
+        public async Task<List<Pelicula>> Filtrar(PeliculasFiltrarDTO peliculasFiltrarDTO)
+        {
+            var peliculasQueryable = context.Peliculas.AsQueryable();
+
+
+            if (!string.IsNullOrWhiteSpace(peliculasFiltrarDTO.Titulo))
+            {
+                peliculasQueryable = peliculasQueryable.Where(p => p.Titulo.Contains(peliculasFiltrarDTO.Titulo));
+            }
+            if (peliculasFiltrarDTO.GeneroId != 0)
+            {
+                peliculasQueryable = peliculasQueryable.Where(p => p.GenerosPelicula.Select(gp => gp.GeneroId).Contains(peliculasFiltrarDTO.GeneroId));
+            }
+            if (peliculasFiltrarDTO.EnCines)
+            {
+                peliculasQueryable = peliculasQueryable.Where(p => p.EnCines);
+            }
+            if (peliculasFiltrarDTO.ProximosEstrenos)
+            {
+                var hoy = DateTime.Today;
+                peliculasQueryable = peliculasQueryable.Where(p => p.FechaEstreno > hoy);
+            }
+
+
+            if (!string.IsNullOrWhiteSpace(peliculasFiltrarDTO.CampoOrdenar))
+            {
+                var tipoOrden = peliculasFiltrarDTO.OrdenAscendente ? "ascending" : "descending";
+                try
+                {
+                    peliculasQueryable = peliculasQueryable.OrderBy($"{peliculasFiltrarDTO.CampoOrdenar} {tipoOrden}");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex.Message, ex);
+                    throw new ArgumentException($"No se puede ordenar por el campo {peliculasFiltrarDTO.CampoOrdenar}");
+                }
+                
+            }
+
+            await httpContext.InsertarParametrosPaginacionEnCabecera(peliculasQueryable);
+            var resultado = await peliculasQueryable.Paginar(peliculasFiltrarDTO.PaginacionDTO).ToListAsync();
+            return resultado;
+        }
+}
 }
 
